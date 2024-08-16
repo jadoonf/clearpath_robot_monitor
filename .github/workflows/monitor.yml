@@ -1,0 +1,66 @@
+name: "Monitor Repos"
+on:
+  workflow_dispatch:
+  schedule:
+    # Run every day
+    - cron: '0 1 * * *'
+  push:
+    branches:
+    - main
+jobs:
+  define-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.setup.outputs.matrix }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          repos.json
+        sparse-checkout-cone-mode: false
+    - name: Setup
+      id: setup
+      run: |
+        echo "matrix=$(cat repos.json | jq -r -c '[.[] as {$repo, $paths} | $paths[]  as $path | {$repo, 'path': $path}]')" >> $GITHUB_OUTPUT
+    - name: Check
+      run: jq . <<< '${{ steps.setup.outputs.matrix }}'
+  monitor_repos:
+    runs-on: ubuntu-latest
+    needs: [define-matrix]
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.define-matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for sync file
+        env:
+          FILEPATH: .sync/${{ matrix.repo }}/${{ matrix.path }}
+        run: |
+          FILE="$(basename "${FILEPATH}")"
+          DIR="$(dirname "${FILEPATH}")"
+          # create the dir, then the file
+          if [ ! -f "${DIR}/${FILE}" ]; then
+            mkdir -p "${DIR}" 
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > "${DIR}/${FILE}"
+          fi
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Add .sync/${{ matrix.repo }}/${{ matrix.path }}
+      - uses: poll-github-repo/action@v1
+        with:
+          repo-to-sync: ${{ matrix.repo }}
+          path-to-sync: ${{ matrix.path }}
+          cache-path: .sync/${{ matrix.repo }}/${{ matrix.path }}
+          tracking-issue-label: upstream-sensor-updates-md
+  
+          # Template for tracking issue title (see available placeholders below)
+          tracking-issue-title: "Update on {{ path }}: {{ sha-short }}"
+  
+          # Template for tracking issue body (see available placeholders below)
+          tracking-issue-body: |
+              New commit in ${{ matrix.repo }}:
+  
+              **{{ message }}** [link]({{ url }})
+          token: ${{ secrets.GITHUB_TOKEN }}
+          yes-create-issues: true
