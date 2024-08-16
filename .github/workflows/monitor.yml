@@ -52,10 +52,10 @@ jobs:
           repo-to-sync: ${{ matrix.repo }}
           path-to-sync: ${{ matrix.path }}
           cache-path: .sync/${{ matrix.repo }}/${{ matrix.path }}
-          tracking-issue-label: upstream-sensor-updates-md
+          tracking-issue-label: updates-${{ matrix.repo }}
   
           # Template for tracking issue title (see available placeholders below)
-          tracking-issue-title: "Update on {{ path }}: {{ sha-short }}"
+          tracking-issue-title: "Update of {{ path }}: {{ sha-short }}"
   
           # Template for tracking issue body (see available placeholders below)
           tracking-issue-body: |
