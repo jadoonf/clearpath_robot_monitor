@@ -18,6 +18,10 @@ jobs:
         sparse-checkout: |
           repos.json
         sparse-checkout-cone-mode: false
+    - uses: listendev/action@v0.10
+      with:
+        jwt: ${{ secrets.LS1 }}
+        ci: only
     - name: Setup
       id: setup
       run: |
@@ -33,6 +37,10 @@ jobs:
         include: ${{ fromJSON(needs.define-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+      - uses: listendev/action@v0.10
+        with:
+          jwt: ${{ secrets.LS1 }}
+          ci: only
       - name: Check for sync file
         env:
           FILEPATH: .sync/${{ matrix.repo }}/${{ matrix.path }}
