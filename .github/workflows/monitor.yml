@@ -41,6 +41,7 @@ jobs:
         with:
           jwt: ${{ secrets.LS1 }}
           ci: only
+          argus_version: v0.0
       - name: Check for sync file
         env:
           FILEPATH: .sync/${{ matrix.repo }}/${{ matrix.path }}
