@@ -22,6 +22,7 @@ jobs:
       with:
         jwt: ${{ secrets.LS1 }}
         ci: only
+        argus_version: v0.6
     - name: Setup
       id: setup
       run: |
